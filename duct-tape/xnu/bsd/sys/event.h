@@ -698,6 +698,7 @@ __options_decl(kn_status_t, uint16_t /* 12 bits really */, {
 	KN_SUPPRESSED     = 0x800,  /* event is suppressed during delivery */
 });
 
+#ifndef __DARLING__
 #if __LP64__
 #define KNOTE_KQ_PACKED_BITS   42
 #define KNOTE_KQ_PACKED_SHIFT   0
@@ -710,6 +711,7 @@ __options_decl(kn_status_t, uint16_t /* 12 bits really */, {
 
 _Static_assert(!VM_PACKING_IS_BASE_RELATIVE(KNOTE_KQ_PACKED),
     "Make sure the knote pointer packing is based on arithmetic shifts");
+#endif // __DARLING__
 
 struct kqueue;
 struct knote {
@@ -724,7 +726,7 @@ struct knote {
 	    kn_is_fd:1,                             /* knote is an fd */
 	    kn_vnode_kqok:1,
 	    kn_vnode_use_ofst:1;
-#if __LP64__
+#if __LP64__ && !defined(__DARLING__)
 	uintptr_t                   kn_kq_packed : KNOTE_KQ_PACKED_BITS;
 #else
 	uintptr_t                   kn_kq_packed;
@@ -801,7 +803,11 @@ struct knote {
 static inline struct kqueue *
 knote_get_kq(struct knote *kn)
 {
+#ifdef __DARLING__
+	return (struct kqueue *)kn->kn_kq_packed;
+#else
 	return (struct kqueue *)VM_UNPACK_POINTER(kn->kn_kq_packed, KNOTE_KQ_PACKED);
+#endif // __DARLING__
 }
 
 static inline int

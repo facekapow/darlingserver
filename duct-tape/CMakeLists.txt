@@ -30,7 +30,7 @@ add_compile_definitions(
 	NEXT
 	__LITTLE_ENDIAN__=1
 	__private_extern__=extern
-	_NLINK_T
+	#_NLINK_T
 	VM32_SUPPORT=1
 	MACH_KERNEL_PRIVATE
 	ARCH_PRIVATE
@@ -334,4 +334,49 @@ add_dependencies(darlingserver_duct_tape
 
 target_link_libraries(darlingserver_duct_tape PUBLIC
 	libsimple_darlingserver
+)
+
+include(darling_static_lib)
+
+add_darling_static_library(darlingserver_kqueue_client
+	FAT
+	SOURCES
+		xnu/bsd/kern/kern_event.c
+
+		src/kqueue/client/read-write.c
+		src/kqueue/client/traps.c
+		src/kqueue/client/util.c
+		src/kqueue/client/locks.c
+)
+
+target_link_libraries(darlingserver_kqueue_client PRIVATE
+	libsimple_darling
+)
+
+target_compile_definitions(darlingserver_kqueue_client PRIVATE
+	DSERVER_CLIENT
+	__DARWIN_LITTLE_ENDIAN=1234
+	__DARWIN_BIG_ENDIAN=4321
+
+	# FIXME: this should not be hard-coded
+	__DARWIN_BYTE_ORDER=__DARWIN_LITTLE_ENDIAN
+)
+
+target_include_directories(darlingserver_kqueue_client PRIVATE
+	internal-include
+	${CMAKE_SOURCE_DIR}/src/kernel/emulation/linux/ext
+	${CMAKE_SOURCE_DIR}/src/startup/mldr/elfcalls
+)
+
+target_include_directories(darlingserver_kqueue_client PUBLIC
+	include/client
+)
+
+add_dependencies(darlingserver_kqueue_client
+	kernel_mig_generate
+)
+
+target_compile_options(darlingserver_kqueue_client PRIVATE
+	-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
+	-target ${APPLE_TARGET_TRIPLET_PRIMARY}
 )

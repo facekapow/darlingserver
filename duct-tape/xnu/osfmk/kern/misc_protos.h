@@ -175,7 +175,9 @@ extern int kdb_printf_unbuffered(const char *format, ...) __printflike(1, 2);
 extern int snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 extern int scnprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 
+#ifndef __DARLING__
 extern void log(int level, char *fmt, ...) __printflike(2, 3);
+#endif // __DARLING__
 
 void
 _doprnt(
